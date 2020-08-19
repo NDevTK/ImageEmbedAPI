@@ -22,6 +22,7 @@ function getRandomInt(min, max) {
 }
 
 app.all('/:subject/:count', async (req, res) => {
+    if(isNaN(req.params.count) && req.params.count !== "embed" || req.params.subject > 100) res.send("Invalid request");
     var count = 0;
     var pages = await getCount(req.params.subject);
     // API limit of flickr
