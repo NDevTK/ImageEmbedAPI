@@ -24,11 +24,16 @@ function getRandomInt(min, max) {
 app.all('/:subject/:count', async (req, res) => {
     if(isNaN(req.params.count) && req.params.count !== "embed" || req.params.subject > 100) return res.status(400).send("Invalid request");
     var count = 0;
-    var pages = await getCount(req.params.subject);
-    // API limit of flickr
-    if(pages > 4000) {
-        perpage = Math.ceil(pages/4000);
-    }
+	try {
+		var pages = await getCount(req.params.subject);
+	} catch {
+		return res.status(500).send("Error getting subject.");
+	}
+	if(pages < 1) res.status(404).send("Subject not found.");
+	// API limit of flickr
+	if(pages > 4000) {
+		perpage = Math.ceil(pages/4000);
+	}
     if (req.params.count === "embed") {
         var pages = await getCount(req.params.subject);
         count = Math.floor(getRandomInt(1, pages));
@@ -55,20 +60,23 @@ app.all('/:subject/:count', async (req, res) => {
     });
 })
 
-// Get count of images for a subject
 function getCount(subject) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         https.get(API(1, subject), (resp) => {
             let data = '';
             resp.on('data', (chunk) => {
                 data += chunk;
             });
             resp.on('end', () => {
-                var pages = JSON.parse(data).photos.pages;
+				try {
+					var pages = JSON.parse(data).photos.pages;
+				} catch {
+					reject();
+				}
                 resolve(pages);
             });
         }).on("error", (err) => {
-            res.send("ERROR");
+            reject();
         });
     });
 }
