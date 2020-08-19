@@ -1,11 +1,13 @@
 const express = require("express");
 const app = express();
 const https = require("https");
+// Very bad joke
 const key = "CorgiGoesHere";
 var perpage = 1;
 
+// Allow cors
 app.use(function(req, res, next) {
-	res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Origin", "*");
     next();
 });
 
@@ -21,14 +23,14 @@ function getRandomInt(min, max) {
 
 app.all('/:subject/:count', async (req, res) => {
     var count = 0;
-	var pages = await getCount(req.params.subject);
-	if(pages > 4000) {
-		perpage = Math.ceil(pages/4000);
-	}
+    var pages = await getCount(req.params.subject);
+    // API limit of flickr
+    if(pages > 4000) {
+        perpage = Math.ceil(pages/4000);
+    }
     if (req.params.count === "embed") {
         var pages = await getCount(req.params.subject);
         count = Math.floor(getRandomInt(1, pages));
-		console.log(count)
     } else if (req.params.count > 0) {
         count = req.params.count;
     }
@@ -52,6 +54,7 @@ app.all('/:subject/:count', async (req, res) => {
     });
 })
 
+// Get count of images for a subject
 function getCount(subject) {
     return new Promise(resolve => {
         https.get(API(1, subject), (resp) => {
@@ -71,7 +74,7 @@ function getCount(subject) {
 
 app.get('/', function(req, res) {
     res.header('Cache-Control', 'public, smax-age=86400, max-age=86400');
-    res.send('<h1>Wellcome!</h1><p1>GET /subject/index</p1>');
+    res.send('<h1>Wellcome!</h1><p1>GET /subject/index</p1><br><p2>GET /subject/embed</p2>');
 });
 
 app.get('*', function(req, res) {
