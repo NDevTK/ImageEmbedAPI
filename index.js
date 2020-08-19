@@ -29,7 +29,7 @@ app.all('/:subject/:count', async (req, res) => {
 	} catch {
 		return res.status(500).send("Error getting subject.");
 	}
-	if(pages < 1) res.status(404).send("Subject not found.");
+	if(pages < 1) return res.status(404).send("Subject not found.");
 	// API limit of flickr
 	if(pages > 4000) {
 		perpage = Math.ceil(pages/4000);
