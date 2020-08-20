@@ -3,7 +3,7 @@ const app = express();
 const https = require("https");
 // Very bad joke
 const key = "CorgiGoesHere";
-var perpage = 1;
+const limit = 4001;
 
 // Allow cors
 app.use(function(req, res, next) {
@@ -11,8 +11,25 @@ app.use(function(req, res, next) {
     next();
 });
 
-function API(count, subject) {
-    return "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&per_page="+perpage+"&extras=owner_name,url_o&sort=relevance&page="+count+"&text="+subject+"&license=9&nojsoncallback=1";
+function API(subject, count = 1, dateupload = 0) {
+	return new Promise((resolve, reject) => {
+        https.get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&per_page=1&extras=owner_name,url_o,date_upload&min_upload_date="+dateupload+"&page="+count+"&text="+subject+"&license=9&nojsoncallback=1", (resp) => {
+            let data = '';
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+            resp.on('end', () => {
+				try {
+					var photos = JSON.parse(data);
+				} catch {
+					reject();
+				}
+                resolve(photos);
+            });
+        }).on("error", (err) => {
+            reject();
+        });
+    });
 }
 
 function getRandomInt(min, max) {
@@ -23,62 +40,41 @@ function getRandomInt(min, max) {
 
 app.all('/:subject/:count', async (req, res) => {
     if(isNaN(req.params.count) && req.params.count !== "embed" || req.params.subject > 100) return res.status(400).send("Invalid request");
-    var count = 0;
-	try {
-		var pages = await getCount(req.params.subject);
-	} catch {
-		return res.status(500).send("Error getting subject.");
-	}
-	if(pages < 1) return res.status(404).send("Subject not found.");
-	// API limit of flickr
-	if(pages > 4000) {
-		perpage = Math.ceil(pages/4000);
-	}
+    var count = 1;
     if (req.params.count === "embed") {
-        var pages = await getCount(req.params.subject);
+		try {
+			var result = await API(req.params.subject, count);
+			if(result.stat !== "ok") res.status(400).send("API Error 1");
+			var pages = result.photos.pages;
+			if(pages < 1) res.status(404).send("Subject not found.");
+		} catch {
+			return res.status(400).send("API Error 2");
+		}
         count = Math.floor(getRandomInt(1, pages));
     } else if (req.params.count > 0) {
         count = req.params.count;
     }
-    https.get(API(count, req.params.subject), (resp) => {
-        let data = '';
-        resp.on('data', (chunk) => {
-            data += chunk;
-        });
-        resp.on('end', () => {
-            if (req.params.count === "embed") {
-                res.header('Cache-Control', 'no-cache, no-store');
-                var photos = JSON.parse(data).photos.photo;
-                res.redirect(307, photos[getRandomInt(1, photos.length) - 1].url_o);
-            } else {
-                res.header('Cache-Control', 'public, smax-age=600, max-age=600');
-                res.status(200).send(data);
-            }
-        });
-    }).on("error", (err) => {
-        res.send("ERROR");
-    });
+	var result = await getPhoto(req.params.subject, count);
+    if (req.params.count === "embed") {
+		res.header('Cache-Control', 'no-cache, no-store');
+        res.redirect(307, result.photos.photo[0].url_o);
+    } else {
+		res.header('Cache-Control', 'public, smax-age=600, max-age=600');
+		res.status(200).send(result);
+    }
 })
 
-function getCount(subject) {
-    return new Promise((resolve, reject) => {
-        https.get(API(1, subject), (resp) => {
-            let data = '';
-            resp.on('data', (chunk) => {
-                data += chunk;
-            });
-            resp.on('end', () => {
-				try {
-					var pages = JSON.parse(data).photos.pages;
-				} catch {
-					reject();
-				}
-                resolve(pages);
-            });
-        }).on("error", (err) => {
-            reject();
-        });
-    });
+async function getPhoto(subject, count = 1) {
+	var requests = Math.floor(count/limit);
+	// Flickr API limit workaround.
+    var index = count - limit * requests;
+	var dateupload = 0;
+	for (requests < 0; requests--;) {
+		let result = await API(subject, limit, dateupload);
+		if(result.stat !== "ok") continue
+		dateupload = result.photos.photo[0].dateupload;
+	}
+	return await API(subject, index + 1, dateupload);
 }
 
 app.get('/', function(req, res) {
