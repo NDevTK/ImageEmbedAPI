@@ -67,14 +67,14 @@ app.all('/:subject/:count', async (req, res) => {
 async function getPhoto(subject, count = 1) {
 	var requests = Math.floor(count/limit);
 	// Flickr API limit workaround.
-    var index = count - limit * requests;
+    var index = (requests > 0) ? (count - limit * requests) + 1 : count;
 	var dateupload = 0;
 	for (requests < 0; requests--;) {
 		let result = await API(subject, limit, dateupload);
 		if(result.stat !== "ok") continue
 		dateupload = result.photos.photo[0].dateupload;
 	}
-	return await API(subject, index + 1, dateupload);
+	return await API(subject, index, dateupload);
 }
 
 app.get('/', function(req, res) {
