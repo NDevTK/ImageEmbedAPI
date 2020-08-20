@@ -13,7 +13,7 @@ app.use(function(req, res, next) {
 
 function API(subject, count = 1, dateupload = 0) {
 	return new Promise((resolve, reject) => {
-        https.get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&per_page=1&extras=owner_name,url_o,date_upload&min_upload_date="+dateupload+"&page="+count+"&text="+subject+"&license=9&nojsoncallback=1", (resp) => {
+        https.get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&per_page=1&extras=owner_name,url_o,date_upload&max_upload_date="+dateupload+"&page="+count+"&text="+subject+"&license=9&nojsoncallback=1", (resp) => {
             let data = '';
             resp.on('data', (chunk) => {
                 data += chunk;
