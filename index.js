@@ -72,7 +72,12 @@ async function getPhoto(subject, count = 1) {
 	for (requests < 0; requests--;) {
 		let result = await API(subject, limit, dateupload);
 		if(result.stat !== "ok") continue
-		dateupload = result.photos.photo[0].dateupload;
+		try {
+			dateupload = result.photos.photo[0].dateupload;
+		} catch {
+			continue
+		}
+		
 	}
 	return await API(subject, index, dateupload);
 }
