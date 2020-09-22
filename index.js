@@ -1,35 +1,22 @@
-const express = require("express");
-const app = express();
-const https = require("https");
-// Very bad joke
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
+
 const key = "CorgiGoesHere";
 const limit = 4001;
 
-// Allow cors
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    next();
-});
+async function handleRequest(request) {
+  let { searchParams } = new URL(request.url);
+  let subject = searchParams.get("subject");
+  if(subject === null || typeof subject !== 'string' || subject.length > 10) {
+      return new Response("Subject is not valid", {status: 400})
+  }
+  return getURL(subject);
+}
 
-function API(subject, count = 1, dateupload = 0) {
-	return new Promise((resolve, reject) => {
-        https.get("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&per_page=1&extras=owner_name,url_o,date_upload&max_upload_date="+dateupload+"&page="+count+"&text="+subject+"&license=9&nojsoncallback=1", (resp) => {
-            let data = '';
-            resp.on('data', (chunk) => {
-                data += chunk;
-            });
-            resp.on('end', () => {
-				try {
-					var photos = JSON.parse(data);
-				} catch {
-					reject();
-				}
-                resolve(photos);
-            });
-        }).on("error", (err) => {
-            reject();
-        });
-    });
+async function API(subject, count = 1, dateupload = 0) {
+  let data = await fetch("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&per_page=1&extras=owner_name,url_o,date_upload&max_upload_date="+dateupload+"&page="+count+"&text="+subject+"&license=9&nojsoncallback=1");
+  return await data.json()
 }
 
 function getRandomInt(min, max) {
@@ -38,35 +25,24 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-app.all('/:subject/:count', async (req, res) => {
-    if(isNaN(req.params.count) && req.params.count !== "embed" || req.params.subject > 100) return res.status(400).send("Invalid request");
+async function getURL(subject) {
     var count = 1;
-    if (req.params.count === "embed") {
-		try {
-			var result = await API(req.params.subject, count);
-			if(result.stat !== "ok") res.status(400).send("API Error 1");
-			var pages = result.photos.pages;
-			if(pages < 1) res.status(404).send("Subject not found.");
-		} catch {
-			return res.status(400).send("API Error 2");
-		}
-        count = Math.floor(getRandomInt(1, pages));
-    } else if (req.params.count > 0) {
-        count = req.params.count;
+	try {
+        var result = await API(subject, count);
+		if(result.stat !== "ok") return new Response("Remote error", {status: 502});
+		var pages = result.photos.pages;
+		if(pages < 1) return new Response("Subject not found", {status: 404});
+    } catch {
+        return new Response("API error", {status: 400});
     }
-	var result = await getPhoto(req.params.subject, count);
-    if (req.params.count === "embed") {
-		res.header('Cache-Control', 'no-cache, no-store');
-        res.redirect(307, result.photos.photo[0].url_o);
-    } else {
-		res.header('Cache-Control', 'public, smax-age=600, max-age=600');
-		res.status(200).send(result);
-    }
-})
+    count = Math.floor(getRandomInt(1, pages));
+    var result = await getPhoto(subject, count);
+    return Response.redirect(result.photos.photo[0].url_o, 307);
+}
 
 async function getPhoto(subject, count = 1) {
-	var requests = Math.floor(count/limit);
-	// Flickr API limit workaround.
+    var requests = Math.floor(count/limit);
+    // Flickr API limit workaround.
     var index = (requests > 0) ? (count - limit * requests) + 1 : count;
 	var dateupload = 0;
 	for (requests < 0; requests--;) {
@@ -77,18 +53,6 @@ async function getPhoto(subject, count = 1) {
 		} catch {
 			continue
 		}
-		
 	}
 	return await API(subject, index, dateupload);
 }
-
-app.get('/', function(req, res) {
-    res.header('Cache-Control', 'public, smax-age=86400, max-age=86400');
-    res.send('<h1>Wellcome!</h1><p1>GET /subject/index</p1><br><p2>GET /subject/embed</p2>');
-});
-
-app.get('*', function(req, res) {
-    res.status(404).send('<h1>What ya doin???</h1>');
-});
-
-module.exports = app;
