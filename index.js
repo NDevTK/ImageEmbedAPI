@@ -35,9 +35,16 @@ async function getURL(subject) {
     } catch {
         return new Response("API error", {status: 400});
     }
+
     count = Math.floor(getRandomInt(1, pages));
     var result = await getPhoto(subject, count);
-    return Response.redirect(result.photos.photo[0].url_o, 307);
+    return new Response("", {
+        status: "307",
+        headers: {
+            "Location": result.photos.photo[0].url_o,
+            "Access-Control-Allow-Origin": "*"
+        }
+    });
 }
 
 async function getPhoto(subject, count = 1) {
