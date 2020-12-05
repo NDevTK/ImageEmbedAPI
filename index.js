@@ -15,7 +15,7 @@ async function handleRequest(request) {
 }
 
 async function API(subject, count = 1, dateupload = 0) {
-  let data = await fetch("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&per_page=1&extras=owner_name,url_o,date_upload&max_upload_date="+dateupload+"&page="+count+"&text="+subject+"&license=9&nojsoncallback=1");
+  let data = await fetch("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+key+"&format=json&in_gallery=1&per_page=1&extras=owner_name,url_o,date_upload&max_upload_date="+dateupload+"&page="+count+"&text="+subject+"&license=9&nojsoncallback=1");
   return await data.json()
 }
 
