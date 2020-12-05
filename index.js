@@ -11,7 +11,7 @@ async function handleRequest(request) {
   if(subject === null || typeof subject !== 'string' || subject.length > 10) {
       return new Response("Subject is not valid", {status: 400})
   }
-  return getURL(subject);
+  return getURL(encodeURIComponent(subject));
 }
 
 async function API(subject, count = 1, dateupload = 0) {
