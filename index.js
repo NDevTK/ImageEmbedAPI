@@ -2,6 +2,7 @@ addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request))
 })
 
+// Joke review for 2021, its stil not funny.
 const key = "CorgiGoesHere";
 const limit = 4001;
 
