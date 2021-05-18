@@ -14,11 +14,11 @@ async function handleRequest(request) {
             status: 400
         })
     }
-    return getURL(encodeURIComponent(subject));
+    return getURL(subject);
 }
 
 async function API(subject, count = 1, dateupload = 0) {
-    let data = await fetch("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=" + key + "&format=json&in_gallery=1&media=photos&per_page=500&extras=url_o,date_upload&license=9&nojsoncallback=1&max_upload_date=" + dateupload + "&page=" + count + "&text=" + subject, {
+    let data = await fetch("https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=" + encodeURIComponent(key) + "&format=json&in_gallery=1&media=photos&per_page=500&extras=url_o,date_upload&license=9&nojsoncallback=1&max_upload_date=" + encodeURIComponent(dateupload) + "&page=" + encodeURIComponent(count) + "&text=" + encodeURIComponent(subject), {
         cf: {
             cacheTtlByStatus: {
                 "200-299": 86400,
