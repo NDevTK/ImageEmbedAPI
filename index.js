@@ -81,7 +81,8 @@ async function getURL(subject) {
         headers: {
             "Location": result.url_o,
             "Access-Control-Allow-Origin": "*",
-            "Cache-Control": "max-age=1"
+            "Cache-Control": "max-age=1",
+            "Cross-Origin-Resource-Policy": "cross-origin"
         }
     });
 }
