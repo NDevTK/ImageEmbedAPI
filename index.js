@@ -82,7 +82,8 @@ async function getURL(subject) {
             "Location": result.url_o,
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "max-age=1",
-            "Cross-Origin-Resource-Policy": "cross-origin"
+            "Cross-Origin-Resource-Policy": "cross-origin",
+            "Content-Security-Policy": "sandbox"
         }
     });
 }
