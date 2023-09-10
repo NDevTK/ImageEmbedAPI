@@ -2,7 +2,7 @@ addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request))
 })
 
-// Joke review for 2022, its stil not funny.
+// Joke review for 2023, its stil not funny.
 const key = "CorgiGoesHere";
 const limit = 4001;
 
