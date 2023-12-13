@@ -1,15 +1,17 @@
 addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request))
+  event.respondWith(handleRequest(event.request))
 })
 
-// Joke review for 2023, its stil not funny.
-const key = "CorgiGoesHere";
+const key = ":)";
 const limit = 4001;
 
 async function handleRequest(request) {
     let { searchParams } = new URL(request.url);
+    if (!searchParams.has("subject")) {
+        return Response.redirect("https://github.com/NDevTK/ImageEmbedAPI");
+    }
     let subject = searchParams.get("subject");
-    if (subject === null || typeof subject !== 'string' || subject.length > 10) {
+    if (subject === null || typeof subject !== 'string' || subject.length > 1337) {
         return new Response("Subject is not valid", {
             status: 400
         })
@@ -22,12 +24,14 @@ async function API(subject, count = 1, dateupload = 0) {
         cf: {
             cacheTtlByStatus: {
                 "200-299": 86400,
-                404: 1,
                 "500-599": 0
             }
         },
+        headers: {
+            "User-Agent": "ImageEmbedAPI"
+        }
     });
-    return await data.json()
+    return await data.json();
 }
 
 function getRandomInt(min, max) {
@@ -77,7 +81,7 @@ async function getURL(subject) {
     count = getRandomInt(1, pages);
     var result = await getPhoto(subject, count);
     return new Response("", {
-        status: "307",
+        status: 307,
         headers: {
             "Location": result.url_o,
             "Access-Control-Allow-Origin": "*",
