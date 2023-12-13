@@ -80,6 +80,13 @@ async function getURL(subject) {
 
     count = getRandomInt(1, pages);
     var result = await getPhoto(subject, count);
+    
+    if (!result.url_o.startsWith("https://")) {
+        return new Response("Unsafe redirect", {
+            status: 502
+        });
+    }
+
     return new Response("", {
         status: 307,
         headers: {
