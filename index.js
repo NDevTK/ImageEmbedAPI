@@ -73,15 +73,21 @@ async function getURL(subject) {
             status: 404
         });
     } catch {
-        return new Response("API error", {
+        return new Response("API error 1", {
             status: 400
         });
     }
 
-    count = getRandomInt(1, pages);
-    var result = await getPhoto(subject, count);
-    
-    if (!result.url_o.startsWith("https://")) {
+    try {
+        count = getRandomInt(1, pages);
+        var result = await getPhoto(subject, count);
+    } catch {
+        return new Response("API error 2", {
+            status: 400
+        });
+    }
+
+    if (!result || result.url_o === null || typeof result.url_o !== 'string' || !result.url_o.startsWith("https://")) {
         return new Response("Unsafe redirect", {
             status: 502
         });
